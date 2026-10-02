@@ -13,13 +13,16 @@ export interface LibraryFilters {
 }
 
 export const libraryApi = {
-  list(filters: LibraryFilters = {}): Promise<LibraryItem[]> {
+  list(filters: LibraryFilters = {}, signal?: AbortSignal): Promise<LibraryItem[]> {
     const params = new URLSearchParams()
     if (filters.type) params.set('type', filters.type)
     if (filters.q?.trim()) params.set('q', filters.q.trim())
     if (filters.favorite !== undefined) params.set('favorite', String(filters.favorite))
     const query = params.toString()
-    return httpClient.request<LibraryItem[]>('library' + (query ? '?' + query : ''))
+    return httpClient.request<LibraryItem[]>('library' + (query ? '?' + query : ''), { signal })
+  },
+  get(id: string, signal?: AbortSignal): Promise<LibraryItem> {
+    return httpClient.request<LibraryItem>('library/' + encodeURIComponent(id), { signal })
   },
   save(payload: LibraryItemCreateRequest): Promise<LibraryItem> {
     return httpClient.request<LibraryItem>('library', { method: 'POST', body: payload })

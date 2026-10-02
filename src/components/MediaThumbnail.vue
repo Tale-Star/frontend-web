@@ -17,7 +17,7 @@ async function load(): Promise<void> {
   const index = ++requestIndex
   if (source.value) URL.revokeObjectURL(source.value)
   source.value = ''
-  if (props.type === 'story') return
+  if (props.type !== 'image') return
   try {
     const url = await mediaApi.loadAsset(props.resourceUrl)
     if (index !== requestIndex) {
@@ -40,6 +40,7 @@ watch(
 )
 
 watch(() => props.resourceUrl, load)
+watch(() => props.type, load)
 onMounted(load)
 onUnmounted(() => {
   requestIndex++
@@ -54,12 +55,6 @@ onUnmounted(() => {
       :src="source"
       alt=""
     >
-    <audio
-      v-else-if="source && type === 'music'"
-      :src="source"
-      controls
-      preload="none"
-    />
     <UiIcon
       v-else
       :name="iconName"

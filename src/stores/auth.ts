@@ -74,6 +74,16 @@ export const useAuthStore = defineStore('auth', () => {
     applySession(await authApi.register(payload))
   }
 
+  async function refreshUser(signal?: AbortSignal): Promise<UserResponse> {
+    const current = await authApi.currentUser(signal)
+    user.value = current
+    return current
+  }
+
+  function updateUser(current: UserResponse): void {
+    user.value = current
+  }
+
   return {
     accessToken,
     user,
@@ -82,6 +92,8 @@ export const useAuthStore = defineStore('auth', () => {
     restoreSession,
     login,
     register,
+    refreshUser,
+    updateUser,
     clearSession,
   }
 })

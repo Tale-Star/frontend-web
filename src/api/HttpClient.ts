@@ -81,13 +81,13 @@ export class HttpClient {
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw error
       const networkError = new ApiError(0, 'network_error', null)
-      this.notifyFailure(networkError)
+      this.notifyFailure(networkError, path)
       throw networkError
     }
 
     if (!response.ok) {
       const apiError = await HttpClient.readError(response)
-      this.notifyFailure(apiError)
+      this.notifyFailure(apiError, path)
       throw apiError
     }
     return response
@@ -115,10 +115,15 @@ export class HttpClient {
     )
   }
 
-  private notifyFailure(error: ApiError): void {
+  private notifyFailure(error: ApiError, path: string): void {
     if (typeof window === 'undefined') return
     if (error.status === 401) {
-      window.dispatchEvent(new CustomEvent('talestar:unauthorized', { detail: error }))
+      const endpoint = path.split('?')[0]?.replace(/^\/+/, '')
+      const rejectedCurrentPassword = endpoint === 'auth/parental-pin' && error.code === 'invalid_credentials'
+      window.dispatchEvent(new CustomEvent(
+        rejectedCurrentPassword ? 'talestar:api-error' : 'talestar:unauthorized',
+        { detail: error },
+      ))
     } else {
       window.dispatchEvent(new CustomEvent('talestar:api-error', { detail: error }))
     }

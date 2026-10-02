@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useStoriesEditor } from '@/composables/useStoriesEditor'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseInput from '@/components/BaseInput.vue'
@@ -9,14 +10,16 @@ import BaseSelect from '@/components/BaseSelect.vue'
 import UiIcon from '@/components/UiIcon.vue'
 
 const editor = useStoriesEditor()
+const route = useRoute()
 const {
   stories, characters, styles, sortedPages, selectedStoryId, selectedStory,
   selectedPage, selectedPageIndex, scenarioOptions, styleOptions, loading, pagesLoading, loadingPageDetail,
   storyModalOpen, editingStoryId, savingStory, savingPage, storyError, pageError,
-  pageImageError, storyForm, pageForm, imageGeneration, isPageDirty, previewImageUrl,
+  pageImageError, storyLibraryError, storyForm, pageForm, imageGeneration, isPageDirty, previewImageUrl,
   pageScenarioName, pageStyleName, load, openCreateStory, openEditStory, saveStory,
   removeStory, clearPage, selectPage, selectStory, addPageObject, toggleCharacter,
   savePage, removePage, movePage, generatePageImage, savePageImageToLibrary, downloadPageImage,
+  saveStoryToLibrary, savingStoryToLibrary,
 } = editor
 const { job, error: generationError, submitting: generating, polling } = imageGeneration
 
@@ -27,7 +30,15 @@ function handleObjectKey(event: KeyboardEvent): void {
   }
 }
 
-onMounted(load)
+async function loadRequestedStory(): Promise<void> {
+  await load()
+  const storyId = route.query.story
+  if (typeof storyId === 'string' && stories.value.some((story) => story.id === storyId)) {
+    await selectStory(storyId)
+  }
+}
+
+onMounted(() => void loadRequestedStory())
 </script>
 
 <template>
@@ -44,6 +55,17 @@ onMounted(load)
             name="plus"
             :size="15"
           /> Nuevo cuento
+        </BaseButton>
+        <BaseButton
+          v-if="selectedStory"
+          :disabled="savingStoryToLibrary"
+          @click="saveStoryToLibrary"
+        >
+          <UiIcon
+            name="heart"
+            :size="15"
+          />
+          {{ savingStoryToLibrary ? 'Guardando…' : 'Guardar en biblioteca' }}
         </BaseButton>
         <BaseButton
           v-if="selectedStory"
@@ -64,6 +86,13 @@ onMounted(load)
       role="alert"
     >
       {{ storyError }}
+    </div>
+    <div
+      v-if="storyLibraryError"
+      class="auth-error story-global-error"
+      role="alert"
+    >
+      {{ storyLibraryError }}
     </div>
 
     <BasePanel

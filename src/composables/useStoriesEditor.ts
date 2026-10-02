@@ -69,6 +69,8 @@ export function useStoriesEditor() {
   const savingStory = ref(false)
   const savingPage = ref(false)
   const storyError = ref('')
+  const storyLibraryError = ref('')
+  const savingStoryToLibrary = ref(false)
   const pageError = ref('')
   const pageImageError = ref('')
   const storyForm = reactive({ title: '', description: '', scenarioId: '', styleId: '', seed: '' })
@@ -562,6 +564,28 @@ export function useStoriesEditor() {
     }
   }
 
+  async function saveStoryToLibrary(): Promise<void> {
+    const currentStory = selectedStory.value
+    if (!currentStory || savingStoryToLibrary.value) return
+    savingStoryToLibrary.value = true
+    storyLibraryError.value = ''
+    try {
+      await libraryApi.save({
+        type: 'story',
+        resource_id: currentStory.id,
+        name: currentStory.title,
+        description: currentStory.description,
+      })
+      notices.push('Cuento guardado en tu biblioteca.')
+    } catch (error) {
+      storyLibraryError.value = error instanceof ApiError && error.status === 409
+        ? 'Este cuento ya está guardado en tu biblioteca.'
+        : messageFor(error)
+    } finally {
+      savingStoryToLibrary.value = false
+    }
+  }
+
   function downloadPageImage(): void {
     if (!previewImageUrl.value || !selectedPage.value) return
     const anchor = document.createElement('a')
@@ -591,10 +615,10 @@ export function useStoriesEditor() {
     stories, characters, scenarios, styles, pages, sortedPages, selectedStoryId, selectedPageId,
     selectedStory, selectedPage, selectedPageIndex, scenarioOptions, styleOptions, loading,
     pagesLoading, loadingPageDetail, storyModalOpen, editingStoryId, savingStory, savingPage, storyError,
-    pageError, pageImageError, storyForm, pageForm, imageGeneration, pageAssetUrls,
+    pageError, pageImageError, storyLibraryError, savingStoryToLibrary, storyForm, pageForm, imageGeneration, pageAssetUrls,
     generationTargetPageId, isPageDirty, previewImageUrl, pageScenarioName, pageStyleName,
     load, openCreateStory, openEditStory, saveStory, removeStory, clearPage, selectPage,
     selectStory, addPageObject, toggleCharacter, savePage, removePage, movePage, generatePageImage,
-    savePageImageToLibrary, downloadPageImage,
+    savePageImageToLibrary, saveStoryToLibrary, downloadPageImage,
   }
 }

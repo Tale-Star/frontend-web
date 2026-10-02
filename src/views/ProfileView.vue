@@ -1,105 +1,216 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseInput from '@/components/BaseInput.vue'
 import BasePanel from '@/components/BasePanel.vue'
 import UiIcon from '@/components/UiIcon.vue'
+import { useProfileSettings } from '@/composables/useProfileSettings'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+const settings = useProfileSettings()
+const {
+  loading,
+  loadError,
+  savingPin,
+  pinError,
+  pinSuccess,
+  pinForm,
+  loadProfile,
+  setParentalPin,
+  enterChildMode,
+} = settings
 
-const initials = computed(() =>
-  auth.user?.display_name
-    .split(/\s+/)
-    .map((part) => part.slice(0, 1))
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'TS',
-)
+const initials = computed(() => auth.user?.display_name
+  .split(/\s+/)
+  .map((part) => part.slice(0, 1))
+  .join('')
+  .slice(0, 2)
+  .toUpperCase() || 'TS')
 
 function signOut(): void {
   auth.clearSession()
   void router.replace({ name: 'login' })
 }
+
+onMounted(() => void loadProfile())
 </script>
 
 <template>
-  <div class="page">
+  <div class="page profile-page">
     <header class="page-heading">
       <div class="page-heading-copy">
         <span class="eyebrow">Perfil</span>
         <h1>Tu cuenta</h1>
-        <p>Datos de la cuenta autenticada con Tale Star API.</p>
+        <p>Administra los datos de tu sesión y los controles parentales.</p>
       </div>
     </header>
 
     <div class="profile-layout">
-      <BasePanel>
-        <div class="profile-hero">
-          <div class="profile-avatar-large">
-            {{ initials }}
-          </div>
-          <div>
-            <strong>{{ auth.user?.display_name || 'Sesión activa' }}</strong>
-            <span>{{ auth.user?.email || 'Datos de cuenta no disponibles' }}</span>
-          </div>
-        </div>
+      <BasePanel class="account-panel">
         <div
-          v-if="auth.user"
-          class="profile-settings-list"
+          v-if="loading"
+          class="profile-loading"
+          role="status"
         >
-          <div class="profile-setting-row">
-            <div><strong>Correo electrónico</strong><small>Correo verificado por la sesión de API</small></div>
-            <span class="profile-value">{{ auth.user.email }}</span>
-          </div>
-          <div class="profile-setting-row">
-            <div><strong>PIN parental</strong><small>Estado devuelto por /api/v1/auth/me</small></div>
-            <span class="profile-value">{{ auth.user.pin_configured ? 'Configurado' : 'Sin configurar' }}</span>
-          </div>
-          <div class="profile-setting-row">
-            <div><strong>Cuenta creada</strong><small>Fecha devuelta por el backend</small></div>
-            <span class="profile-value">{{ new Date(auth.user.created_at).toLocaleDateString() }}</span>
-          </div>
-          <div class="profile-setting-row">
-            <div><strong>Identificador de cuenta</strong><small>UUID de usuario</small></div>
-            <span class="profile-value account-id">{{ auth.user.id }}</span>
-          </div>
+          <span
+            class="profile-spinner"
+            aria-hidden="true"
+          />
+          <span>Consultando tu cuenta…</span>
         </div>
         <div
-          v-else
-          class="profile-unavailable"
+          v-else-if="loadError"
+          class="profile-load-error"
+          role="alert"
         >
           <UiIcon
             name="clock"
-            :size="17"
+            :size="18"
           />
-          <span>No se pudo cargar la sesión actual. Comprueba la conexión con el backend.</span>
-        </div>
-        <div class="profile-actions">
-          <BaseButton
-            variant="danger"
-            @click="signOut"
-          >
-            <UiIcon
-              name="logout"
-              :size="15"
-            /> Cerrar sesión
+          <div><strong>No se pudo consultar el perfil</strong><p>{{ loadError }}</p></div>
+          <BaseButton @click="loadProfile">
+            Volver a intentar
           </BaseButton>
         </div>
+        <template v-else-if="auth.user">
+          <div class="profile-hero">
+            <div class="profile-avatar-large">
+              {{ initials }}
+            </div>
+            <div>
+              <strong>{{ auth.user.display_name }}</strong>
+              <span>{{ auth.user.email }}</span>
+            </div>
+          </div>
+          <div class="profile-settings-list">
+            <div class="profile-setting-row">
+              <div><strong>Correo electrónico</strong><small>Devuelto por GET /api/v1/auth/me</small></div>
+              <span class="profile-value">{{ auth.user.email }}</span>
+            </div>
+            <div class="profile-setting-row">
+              <div><strong>PIN parental</strong><small>El backend conserva un hash, no el PIN</small></div>
+              <span class="profile-value">{{ auth.user.pin_configured ? 'Configurado' : 'Sin configurar' }}</span>
+            </div>
+            <div class="profile-setting-row">
+              <div><strong>Cuenta creada</strong><small>Fecha del backend</small></div>
+              <span class="profile-value">{{ new Date(auth.user.created_at).toLocaleDateString() }}</span>
+            </div>
+            <div class="profile-setting-row">
+              <div><strong>Identificador</strong><small>UUID de usuario</small></div>
+              <span class="profile-value account-id">{{ auth.user.id }}</span>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <BaseButton
+              variant="danger"
+              @click="signOut"
+            >
+              <UiIcon
+                name="logout"
+                :size="15"
+              /> Cerrar sesión
+            </BaseButton>
+          </div>
+        </template>
+      </BasePanel>
+
+      <BasePanel class="parental-panel">
+        <span class="eyebrow">Seguridad familiar</span>
+        <h2>{{ auth.user?.pin_configured ? 'Actualizar PIN parental' : 'Configurar PIN parental' }}</h2>
+        <p class="panel-description">
+          El backend verifica tu contraseña actual, guarda el PIN como hash y valida cada salida del modo infantil.
+        </p>
+        <form
+          class="pin-form"
+          @submit.prevent="setParentalPin"
+        >
+          <BaseInput
+            v-model="pinForm.currentPassword"
+            label="Contraseña actual"
+            type="password"
+            autocomplete="current-password"
+            :maxlength="128"
+            required
+          />
+          <BaseInput
+            v-model="pinForm.pin"
+            label="Nuevo PIN"
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            pattern="[0-9]{4,8}"
+            :minlength="4"
+            :maxlength="8"
+            required
+            hint="De 4 a 8 dígitos"
+          />
+          <BaseInput
+            v-model="pinForm.confirmPin"
+            label="Confirmar nuevo PIN"
+            type="password"
+            inputmode="numeric"
+            autocomplete="new-password"
+            pattern="[0-9]{4,8}"
+            :minlength="4"
+            :maxlength="8"
+            required
+          />
+          <p
+            v-if="pinError"
+            class="pin-feedback pin-error"
+            role="alert"
+          >
+            {{ pinError }}
+          </p>
+          <p
+            v-else-if="pinSuccess"
+            class="pin-feedback pin-success"
+            role="status"
+          >
+            {{ pinSuccess }}
+          </p>
+          <BaseButton
+            type="submit"
+            variant="primary"
+            :disabled="savingPin || loading || !auth.user"
+          >
+            {{ savingPin ? 'Actualizando…' : 'Guardar PIN parental' }}
+          </BaseButton>
+        </form>
+        <div class="child-mode-entry">
+          <div>
+            <strong>Modo infantil</strong>
+            <small>Vista a pantalla completa de creaciones guardadas.</small>
+          </div>
+          <BaseButton
+            :disabled="loading || !auth.user?.pin_configured"
+            @click="enterChildMode"
+          >
+            Entrar
+          </BaseButton>
+        </div>
+        <p
+          v-if="!auth.user?.pin_configured"
+          class="child-mode-hint"
+        >
+          Configura un PIN parental para habilitar esta vista. Salir siempre consulta el PIN al backend.
+        </p>
       </BasePanel>
 
       <BasePanel class="session-panel">
         <span class="eyebrow">Sesión</span>
         <h2>Acceso seguro</h2>
-        <p>La API autentica las solicitudes con un token bearer de duración limitada.</p>
+        <p>La API autentica solicitudes mediante un token bearer de duración limitada.</p>
         <div class="session-status">
           <span class="status-dot" />
-          <div><strong>Token de acceso</strong><small>Guardado en esta pestaña y validado con la API.</small></div>
+          <div><strong>Token de acceso</strong><small>Guardado en sessionStorage y verificado con /api/v1/auth/me.</small></div>
         </div>
         <div class="session-status">
           <span class="status-dot status-muted" />
-          <div><strong>Renovación automática</strong><small>El backend no publica un endpoint de refresh.</small></div>
+          <div><strong>Renovación automática</strong><small>El backend no publica endpoint de refresh ni logout.</small></div>
         </div>
       </BasePanel>
     </div>
@@ -107,174 +218,45 @@ function signOut(): void {
 </template>
 
 <style scoped>
-.profile-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
-  align-items: start;
-  gap: 14px;
-}
-
-.profile-hero {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
-}
-
-.profile-avatar-large {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 15px;
-  background: linear-gradient(145deg, #9974fe, #5b3dfa);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.profile-hero strong,
-.profile-hero span {
-  display: block;
-}
-
-.profile-hero strong {
-  font-size: 14px;
-}
-
-.profile-hero span {
-  margin-top: 4px;
-  color: var(--text-3);
-  font-size: 10px;
-}
-
-.profile-settings-list {
-  display: grid;
-}
-
-.profile-setting-row {
-  display: flex;
-  min-height: 68px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-.profile-setting-row strong,
-.profile-setting-row small {
-  display: block;
-}
-
-.profile-setting-row strong {
-  font-size: 11px;
-}
-
-.profile-setting-row small {
-  margin-top: 3px;
-  color: var(--text-3);
-  font-size: 9px;
-}
-
-.profile-value {
-  color: var(--text-2);
-  font-size: 10px;
-  text-align: right;
-}
-
-.account-id {
-  max-width: 200px;
-  overflow-wrap: anywhere;
-}
-
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 15px;
-}
-
-.session-panel h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 21px;
-}
-
-.session-panel > p {
-  color: var(--text-2);
-  font-size: 11px;
-  line-height: 1.55;
-}
-
-.session-status {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.session-status strong,
-.session-status small {
-  display: block;
-}
-
-.session-status strong {
-  font-size: 10px;
-}
-
-.session-status small {
-  margin-top: 3px;
-  color: var(--text-3);
-  font-size: 9px;
-  line-height: 1.45;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  margin-top: 3px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 0 4px rgba(34, 160, 107, 0.1);
-}
-
-.status-muted {
-  background: #a9a9b2;
-  box-shadow: 0 0 0 4px rgba(93, 96, 109, 0.1);
-}
-
-.profile-unavailable {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 20px 0;
-  color: var(--text-2);
-  font-size: 11px;
-}
-
-@media (max-width: 900px) {
-  .profile-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 520px) {
-  .profile-setting-row {
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-    padding-block: 11px;
-  }
-
-  .profile-value {
-    text-align: left;
-  }
-}
+.profile-layout { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(290px,.9fr); align-items: start; gap: 14px; }
+.account-panel { grid-row: span 2; }
+.profile-hero { display: flex; align-items: center; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.profile-avatar-large { display: grid; width: 52px; height: 52px; flex: 0 0 auto; place-items: center; border-radius: 15px; background: linear-gradient(145deg,#9974fe,#5b3dfa); color: #fff; font-size: 13px; font-weight: 800; }
+.profile-hero strong,.profile-hero span { display: block; }
+.profile-hero strong { font-size: 14px; }
+.profile-hero span { margin-top: 4px; color: var(--text-3); font-size: 10px; }
+.profile-settings-list { display: grid; }
+.profile-setting-row { display: flex; min-height: 68px; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--border); }
+.profile-setting-row strong,.profile-setting-row small { display: block; }
+.profile-setting-row strong { font-size: 11px; }
+.profile-setting-row small { margin-top: 3px; color: var(--text-3); font-size: 9px; }
+.profile-value { color: var(--text-2); font-size: 10px; text-align: right; }
+.account-id { max-width: 200px; overflow-wrap: anywhere; }
+.profile-actions { display: flex; justify-content: flex-end; padding-top: 15px; }
+.parental-panel h2,.session-panel h2 { margin: 0; font-family: var(--font-display); font-size: 20px; }
+.panel-description,.session-panel > p { color: var(--text-2); font-size: 10px; line-height: 1.55; }
+.pin-form { display: grid; gap: 11px; margin-top: 14px; }
+.pin-form :deep(input[inputmode="numeric"]) { letter-spacing: .2em; }
+.pin-feedback { margin: 0; font-size: 9px; }
+.pin-error { color: #a02d40; }
+.pin-success { color: #197849; }
+.child-mode-entry { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 17px; padding-top: 13px; border-top: 1px solid var(--border); }
+.child-mode-entry strong,.child-mode-entry small { display: block; }
+.child-mode-entry strong { font-size: 10px; }
+.child-mode-entry small { margin-top: 3px; color: var(--text-3); font-size: 8px; line-height: 1.4; }
+.child-mode-hint { color: var(--text-3); font-size: 8px; line-height: 1.5; }
+.session-status { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.4); }
+.session-status strong,.session-status small { display: block; }
+.session-status strong { font-size: 10px; }
+.session-status small { margin-top: 3px; color: var(--text-3); font-size: 9px; line-height: 1.45; }
+.status-dot { width: 8px; height: 8px; flex: 0 0 auto; margin-top: 3px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px rgba(34,160,107,.1); }
+.status-muted { background: #a9a9b2; box-shadow: 0 0 0 4px rgba(93,96,109,.1); }
+.profile-loading,.profile-load-error { display: flex; min-height: 280px; align-items: center; justify-content: center; gap: 12px; color: var(--text-2); font-size: 11px; }
+.profile-load-error { flex-wrap: wrap; }
+.profile-load-error div { flex-basis: 100%; text-align: center; }
+.profile-load-error p { color: var(--text-3); }
+.profile-spinner { width: 22px; height: 22px; border: 3px solid rgba(116,84,253,.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 900px) { .profile-layout { grid-template-columns: 1fr; } .account-panel { grid-row: auto; } }
+@media (max-width: 520px) { .profile-setting-row { align-items: flex-start; flex-direction: column; justify-content: center; gap: 4px; padding-block: 11px; } .profile-value { text-align: left; } }
 </style>

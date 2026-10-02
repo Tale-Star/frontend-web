@@ -24,6 +24,19 @@ export interface LoginRequest {
   password: string
 }
 
+export interface SetParentalPinRequest {
+  current_password: string
+  pin: string
+}
+
+export interface ValidateParentalPinRequest {
+  pin: string
+}
+
+export interface ValidateParentalPinResponse {
+  valid: boolean
+}
+
 export interface Character {
   id: string
   name: string
