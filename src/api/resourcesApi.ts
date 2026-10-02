@@ -25,8 +25,8 @@ function queryFor(value: string | undefined): string {
 }
 
 export const resourcesApi = {
-  listCharacters(q?: string): Promise<Character[]> {
-    return httpClient.request<Character[]>('characters' + queryFor(q))
+  listCharacters(q?: string, signal?: AbortSignal): Promise<Character[]> {
+    return httpClient.request<Character[]>('characters' + queryFor(q), { signal })
   },
   createCharacter(payload: CharacterCreateRequest): Promise<Character> {
     return httpClient.request<Character>('characters', { method: 'POST', body: payload })
@@ -40,8 +40,8 @@ export const resourcesApi = {
   deleteCharacter(id: string): Promise<void> {
     return httpClient.request<void>('characters/' + encodeURIComponent(id), { method: 'DELETE' })
   },
-  listScenarios(q?: string): Promise<Scenario[]> {
-    return httpClient.request<Scenario[]>('scenarios' + queryFor(q))
+  listScenarios(q?: string, signal?: AbortSignal): Promise<Scenario[]> {
+    return httpClient.request<Scenario[]>('scenarios' + queryFor(q), { signal })
   },
   createScenario(payload: ScenarioCreateRequest): Promise<Scenario> {
     return httpClient.request<Scenario>('scenarios', { method: 'POST', body: payload })
@@ -55,8 +55,8 @@ export const resourcesApi = {
   deleteScenario(id: string): Promise<void> {
     return httpClient.request<void>('scenarios/' + encodeURIComponent(id), { method: 'DELETE' })
   },
-  listStyleProfiles(q?: string): Promise<StyleProfile[]> {
-    return httpClient.request<StyleProfile[]>('style-profiles' + queryFor(q))
+  listStyleProfiles(q?: string, signal?: AbortSignal): Promise<StyleProfile[]> {
+    return httpClient.request<StyleProfile[]>('style-profiles' + queryFor(q), { signal })
   },
   createStyleProfile(payload: StyleProfileCreateRequest): Promise<StyleProfile> {
     return httpClient.request<StyleProfile>('style-profiles', { method: 'POST', body: payload })
@@ -72,11 +72,14 @@ export const resourcesApi = {
       method: 'DELETE',
     })
   },
-  listStories(q?: string): Promise<Story[]> {
-    return httpClient.request<Story[]>('stories' + queryFor(q))
+  listStories(q?: string, signal?: AbortSignal): Promise<Story[]> {
+    return httpClient.request<Story[]>('stories' + queryFor(q), { signal })
   },
   createStory(payload: StoryCreateRequest): Promise<Story> {
     return httpClient.request<Story>('stories', { method: 'POST', body: payload })
+  },
+  getStory(id: string, signal?: AbortSignal): Promise<Story> {
+    return httpClient.request<Story>('stories/' + encodeURIComponent(id), { signal })
   },
   patchStory(id: string, payload: StoryPatchRequest): Promise<Story> {
     return httpClient.request<Story>('stories/' + encodeURIComponent(id), {
@@ -87,8 +90,17 @@ export const resourcesApi = {
   deleteStory(id: string): Promise<void> {
     return httpClient.request<void>('stories/' + encodeURIComponent(id), { method: 'DELETE' })
   },
-  listStoryPages(storyId: string): Promise<StoryPage[]> {
-    return httpClient.request<StoryPage[]>('stories/' + encodeURIComponent(storyId) + '/pages')
+  listStoryPages(storyId: string, signal?: AbortSignal): Promise<StoryPage[]> {
+    return httpClient.request<StoryPage[]>(
+      'stories/' + encodeURIComponent(storyId) + '/pages',
+      { signal },
+    )
+  },
+  getStoryPage(storyId: string, pageId: string, signal?: AbortSignal): Promise<StoryPage> {
+    return httpClient.request<StoryPage>(
+      'stories/' + encodeURIComponent(storyId) + '/pages/' + encodeURIComponent(pageId),
+      { signal },
+    )
   },
   createStoryPage(storyId: string, payload: StoryPageCreateRequest): Promise<StoryPage> {
     return httpClient.request<StoryPage>('stories/' + encodeURIComponent(storyId) + '/pages', {

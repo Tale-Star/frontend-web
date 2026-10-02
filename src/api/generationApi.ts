@@ -6,10 +6,11 @@ import type {
 } from '@/types/api'
 
 export const generationApi = {
-  createImage(payload: ImageGenerationRequest): Promise<GenerationJob> {
+  createImage(payload: ImageGenerationRequest, signal?: AbortSignal): Promise<GenerationJob> {
     return httpClient.request<GenerationJob>('generations/images', {
       method: 'POST',
       body: payload,
+      signal,
     })
   },
   createMusic(payload: MusicGenerationRequest): Promise<GenerationJob> {
@@ -18,7 +19,7 @@ export const generationApi = {
       body: payload,
     })
   },
-  getJob(id: string): Promise<GenerationJob> {
-    return httpClient.request<GenerationJob>('generations/' + encodeURIComponent(id))
+  getJob(id: string, signal?: AbortSignal): Promise<GenerationJob> {
+    return httpClient.request<GenerationJob>('generations/' + encodeURIComponent(id), { signal })
   },
 }
