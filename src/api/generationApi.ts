@@ -13,10 +13,11 @@ export const generationApi = {
       signal,
     })
   },
-  createMusic(payload: MusicGenerationRequest): Promise<GenerationJob> {
+  createMusic(payload: MusicGenerationRequest, signal?: AbortSignal): Promise<GenerationJob> {
     return httpClient.request<GenerationJob>('generations/music', {
       method: 'POST',
       body: payload,
+      signal,
     })
   },
   getJob(id: string, signal?: AbortSignal): Promise<GenerationJob> {
