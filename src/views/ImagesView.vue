@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useImageCreator } from '@/composables/useImageCreator'
 import BaseButton from '@/components/BaseButton.vue'
+import CharacterMentionTextarea from '@/components/CharacterMentionTextarea.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BasePanel from '@/components/BasePanel.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
@@ -121,12 +122,17 @@ onMounted(loadResources)
           </section>
 
           <div class="form-grid two image-fields">
-            <BaseInput
-              v-model="form.action"
-              label="Acción principal"
-              placeholder="Describe qué sucede en la escena"
-              :maxlength="200"
-            />
+            <label class="form-field">
+              <span class="form-label">Acción principal</span>
+              <CharacterMentionTextarea
+                v-model="form.action"
+                :characters="characters"
+                label="Acción principal"
+                placeholder="Describe qué sucede en la escena"
+                :maxlength="200"
+                :rows="2"
+              />
+            </label>
             <BaseInput
               v-model="form.emotion"
               label="Emoción"
@@ -229,11 +235,12 @@ onMounted(loadResources)
 
           <label class="form-field optional-prompt">
             <span class="form-label">Prompt libre opcional</span>
-            <textarea
+            <CharacterMentionTextarea
               v-model="form.freePrompt"
-              class="form-control"
-              rows="2"
-              maxlength="4000"
+              :characters="characters"
+              label="Prompt libre opcional"
+              :rows="2"
+              :maxlength="4000"
               placeholder="Añade un detalle creativo adicional…"
             />
           </label>
@@ -246,18 +253,20 @@ onMounted(loadResources)
           <div class="free-form-intro">
             <span class="eyebrow">Prompt libre</span>
             <h2>Describe tu escena</h2>
-            <p>El texto se enviará en <code>FreePrompt</code>; puedes sumar indicaciones adicionales y una seed.</p>
+            <p>Escribe @ para insertar un personaje guardado. Al generar, el backend agrega su descripción y traduce el prompt al inglés.</p>
           </div>
           <label class="form-field">
             <span class="form-label">Prompt</span>
-            <textarea
+            <CharacterMentionTextarea
               v-model="form.freePrompt"
-              class="form-control free-prompt-area"
-              rows="9"
-              maxlength="4000"
+              :characters="characters"
+              label="Prompt"
+              textarea-class="free-prompt-area"
+              :rows="9"
+              :maxlength="4000"
               placeholder="Escribe la escena que quieres crear…"
             />
-            <small class="form-hint">{{ form.freePrompt.length }} / 4000</small>
+            <small class="form-hint">{{ form.freePrompt.length }} / 4000 · Escribe @ para mencionar un personaje.</small>
           </label>
           <BaseInput
             v-model="form.seed"
@@ -270,11 +279,12 @@ onMounted(loadResources)
 
         <label class="form-field extra-field">
           <span class="form-label">Indicaciones adicionales <small>Opcional</small></span>
-          <textarea
+          <CharacterMentionTextarea
             v-model="form.extra"
-            class="form-control"
-            rows="3"
-            maxlength="2000"
+            :characters="characters"
+            label="Indicaciones adicionales"
+            :rows="3"
+            :maxlength="2000"
             placeholder="Detalles adicionales para el generador…"
           />
         </label>

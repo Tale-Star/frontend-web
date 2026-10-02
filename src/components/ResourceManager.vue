@@ -374,7 +374,7 @@ onMounted(load)
               class="form-control code-field"
               rows="4"
             />
-            <small class="form-hint">Objeto JSON guardado con el perfil.</small>
+            <small class="form-hint">Para imagen: zimage_lora_asset admite flat_anime_style_zit, amelicart_illustration o flat_color_zimage_base; zimage_lora_scale va de 0 a 2.</small>
           </label>
         </template>
         <div

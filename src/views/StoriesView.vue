@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStoriesEditor } from '@/composables/useStoriesEditor'
 import BaseButton from '@/components/BaseButton.vue'
+import CharacterMentionTextarea from '@/components/CharacterMentionTextarea.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import BasePanel from '@/components/BasePanel.vue'
@@ -293,23 +294,36 @@ onMounted(() => void loadRequestedStory())
 
             <label class="form-field">
               <span class="form-label">Texto de la página</span>
-              <textarea
+              <CharacterMentionTextarea
                 v-model="pageForm.text"
-                class="form-control page-text"
-                rows="6"
-                maxlength="20000"
+                :characters="characters"
+                label="Texto de la página"
+                textarea-class="page-text"
+                :rows="6"
+                :maxlength="20000"
                 placeholder="Escribe el texto de esta página…"
               />
-              <small class="form-hint character-count">{{ pageForm.text.length }} / 20000</small>
+              <small class="form-hint character-count">{{ pageForm.text.length }} / 20000 · Escribe @ para mencionar personajes guardados.</small>
+              <small
+                v-if="pageForm.text.length > 4000"
+                class="form-hint character-count"
+              >
+                El prompt de imagen admite 4000 caracteres; se enviarán los primeros 4000.
+              </small>
             </label>
 
             <div class="form-grid two">
-              <BaseInput
-                v-model="pageForm.action"
-                label="Acción principal"
-                placeholder="Qué sucede en esta escena"
-                :maxlength="2000"
-              />
+              <label class="form-field">
+                <span class="form-label">Acción principal</span>
+                <CharacterMentionTextarea
+                  v-model="pageForm.action"
+                  :characters="characters"
+                  label="Acción principal"
+                  placeholder="Qué sucede en esta escena"
+                  :maxlength="2000"
+                  :rows="2"
+                />
+              </label>
               <BaseInput
                 v-model="pageForm.emotion"
                 label="Emoción"
@@ -404,11 +418,12 @@ onMounted(() => void loadRequestedStory())
 
             <label class="form-field">
               <span class="form-label">Indicaciones adicionales <small>Opcional</small></span>
-              <textarea
+              <CharacterMentionTextarea
                 v-model="pageForm.extra"
-                class="form-control"
-                rows="3"
-                maxlength="2000"
+                :characters="characters"
+                label="Indicaciones adicionales"
+                :rows="3"
+                :maxlength="2000"
                 placeholder="Detalles que deben aparecer en la ilustración…"
               />
             </label>

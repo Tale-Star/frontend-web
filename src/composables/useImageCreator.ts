@@ -50,20 +50,34 @@ export function useImageCreator() {
       .filter((row) => selectedCharacters.value.includes(row.id))
       .map((row) => row.name),
   )
+  const selectedCharacterPrompts = computed(() =>
+    characters.value
+      .filter((row) => selectedCharacters.value.includes(row.id))
+      .map(characterPromptDescription),
+  )
   const scenarioOptions = computed(() => scenarios.value.map((row) => ({ label: row.name, value: row.id })))
   const styleOptions = computed(() => styles.value.map((row) => ({ label: row.name, value: row.id })))
+  function expandCharacterMentions(value: string): string {
+    return characters.value.reduce((prompt, character) => {
+      const escaped = character.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return prompt.replace(
+        new RegExp(`(?<![\\p{L}\\p{N}_])@${escaped}(?![\\p{L}\\p{N}_])`, 'giu'),
+        characterPromptDescription(character),
+      )
+    }, value)
+  }
   const builtPrompt = computed(() => {
     const parts = mode.value === 'free'
-      ? [form.freePrompt.trim(), form.extra.trim()]
+      ? [expandCharacterMentions(form.freePrompt.trim()), expandCharacterMentions(form.extra.trim())]
       : [
-          selectedCharacterNames.value.join(', '),
-          form.action.trim(),
+          selectedCharacterPrompts.value.join(', '),
+          expandCharacterMentions(form.action.trim()),
           form.emotion.trim(),
           selectedScenario.value?.name || '',
           form.moment.trim(),
           objects.value.join(', '),
           selectedStyle.value?.name || '',
-          form.extra.trim(),
+          expandCharacterMentions(form.extra.trim()),
         ]
     return parts.filter(Boolean).join(' · ')
   })
@@ -217,4 +231,23 @@ export function useImageCreator() {
     hasGeneratedImage, jobStatusLabel, loadResources, toggleCharacter, addObject,
     removeObject, handleObjectKey, generate, saveToLibrary, downloadImage, copyPrompt,
   }
+}
+
+function characterPromptDescription(character: Character): string {
+  const details = [character.visual_description, character.description]
+  for (const [key, value] of Object.entries(character.attributes)) {
+    if (typeof value === 'string' && value.trim()) {
+      details.push(`${key.replace(/_/g, ' ')}: ${value.trim()}`)
+    } else if (Array.isArray(value)) {
+      const tags = value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+      if (tags.length) details.push(`${key.replace(/_/g, ' ')}: ${tags.join(', ')}`)
+    }
+  }
+  return details
+    .filter(Boolean)
+    .join(', ')
+    .split(/[,;\n.!?]+|\s+(?:y|e|and)\s+/i)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(', ')
 }

@@ -41,6 +41,8 @@ Vite sirve la aplicación en `http://127.0.0.1:5173`. El backend permite ese ori
 
 Las rutas de trabajo requieren sesión. Si no hay sesión válida, la aplicación lleva al login y conserva la ruta solicitada para volver después.
 
+En los prompts de imágenes y en las páginas de cuentos puedes escribir `@` para elegir un personaje guardado. Al generar una ilustración, el backend resuelve la mención con la descripción del personaje y traduce el prompt en español al inglés.
+
 ## Arquitectura
 
 - `src/api/` contiene el cliente HTTP y clientes por recurso. Todos añaden el bearer token y normalizan los errores del backend.

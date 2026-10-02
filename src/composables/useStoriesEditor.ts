@@ -519,7 +519,7 @@ export function useStoriesEditor() {
       Scene: scenario?.visual_description || scenario?.name || '',
       Moment: typeof config.moment === 'string' ? config.moment : '',
       Extra: typeof config.extra === 'string' ? config.extra : '',
-      FreePrompt: '',
+      FreePrompt: page.text.slice(0, 4000),
       Style: style?.name || '',
       Characters: names,
       Objects: objects,
