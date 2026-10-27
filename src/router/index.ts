@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import AppShell from '@/layouts/AppShell.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
+import TermsView from '@/views/TermsView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import ImagesView from '@/views/ImagesView.vue'
 import StoriesView from '@/views/StoriesView.vue'
@@ -28,6 +29,7 @@ export const router = createRouter({
     },
     { path: '/login', name: 'login', component: LoginView, meta: { publicOnly: true } },
     { path: '/register', name: 'register', component: RegisterView, meta: { publicOnly: true } },
+    { path: '/terms', name: 'terms', component: TermsView, meta: { title: 'Términos y condiciones' } },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
   scrollBehavior() {

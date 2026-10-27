@@ -38,6 +38,7 @@ Vite sirve la aplicación en `http://127.0.0.1:5173`. El backend permite ese ori
 - `/library` — imágenes, cuentos y música guardados.
 - `/profile` — cuenta, PIN parental y modo infantil.
 - `/login` y `/register` — acceso y registro.
+- `/terms` — términos y condiciones disponibles sin iniciar sesión.
 
 Las rutas de trabajo requieren sesión. Si no hay sesión válida, la aplicación lleva al login y conserva la ruta solicitada para volver después.
 
