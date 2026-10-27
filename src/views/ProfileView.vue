@@ -104,6 +104,12 @@ onMounted(() => void loadProfile())
             </div>
           </div>
           <div class="profile-actions">
+            <RouterLink
+              class="profile-terms-link"
+              to="/terms"
+            >
+              Términos y condiciones
+            </RouterLink>
             <BaseButton
               variant="danger"
               @click="signOut"
@@ -232,7 +238,8 @@ onMounted(() => void loadProfile())
 .profile-setting-row small { margin-top: 3px; color: var(--text-3); font-size: 9px; }
 .profile-value { color: var(--text-2); font-size: 10px; text-align: right; }
 .account-id { max-width: 200px; overflow-wrap: anywhere; }
-.profile-actions { display: flex; justify-content: flex-end; padding-top: 15px; }
+.profile-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 15px; }
+.profile-terms-link { color: #5b3dfa; font-size: 11px; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .parental-panel h2,.session-panel h2 { margin: 0; font-family: var(--font-display); font-size: 20px; }
 .panel-description,.session-panel > p { color: var(--text-2); font-size: 10px; line-height: 1.55; }
 .pin-form { display: grid; gap: 11px; margin-top: 14px; }
