@@ -239,8 +239,8 @@ export function useMusicCreator() {
   function parseRequest(): MusicGenerationRequest | null {
     const duration = Number(form.duration)
     const bpm = Number(form.bpm)
-    if (!Number.isInteger(duration) || duration < 10 || duration > 600) {
-      error.value = 'La duración debe ser un entero entre 10 y 600 segundos.'
+    if (!Number.isInteger(duration) || duration < 30 || duration > 210) {
+      error.value = 'La duración debe ser un entero entre 30 y 210 segundos (3 min 30 s).'
       return null
     }
     if (!Number.isInteger(bpm) || bpm < 30 || bpm > 300) {

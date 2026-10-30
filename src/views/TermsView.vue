@@ -28,7 +28,7 @@
             Estas condiciones explican cómo usar Tale Star y qué debes tener en cuenta al crear
             contenido para niños. Léelas antes de crear tu cuenta.
           </p>
-          <span class="terms-date">Versión 1.0 · Última actualización: 26 de octubre de 2026</span>
+          <span class="terms-date">Versión 1.1 · Última actualización: 30 de octubre de 2026</span>
         </div>
 
         <nav
@@ -91,9 +91,12 @@
               actividad o propósito educativo concreto.
             </p>
             <p>
-              Revisa el texto, las imágenes y el audio antes de compartirlos o utilizarlos con
-              niños. Puedes ajustar tu contenido o solicitar otra generación si el resultado no
-              responde a lo que necesitas.
+              Antes de mostrar, reproducir, publicar o compartir un recurso con menores, el adulto
+              debe leer todo el texto, inspeccionar todas las imágenes y escuchar el audio completo,
+              incluidas sus letras. Debe evaluar la adecuación a la edad, al contexto y a las
+              necesidades del menor, descartar resultados inapropiados y repetir esta revisión
+              después de cada regeneración. Los controles automáticos no garantizan contenido seguro;
+              la generación no implica aprobación del resultado por Tale Star.
             </p>
           </section>
 
@@ -103,6 +106,18 @@
               Los niños son los destinatarios del contenido, mientras que la selección, creación y
               revisión corresponden al adulto. Si permites que un niño consulte una creación, debes
               acompañar su uso y comprobar previamente que el material sea apropiado para él.
+            </p>
+            <p>
+              El adulto asume la responsabilidad que legalmente le corresponda por las instrucciones
+              y materiales que aporta, por incumplir su deber de revisión y por sus decisiones de
+              mostrar o compartir contenido. Debe respetar derechos de terceros y las autorizaciones
+              necesarias. Está prohibido solicitar o distribuir contenido sexual, explotación de
+              menores, violencia gráfica, maltrato, odio o contenido ilícito.
+            </p>
+            <p>
+              Estas condiciones no excluyen responsabilidades legales imperativas del proveedor
+              ni limitan derechos irrenunciables de consumidores o menores. No constituyen una
+              exoneración absoluta de Tale Star.
             </p>
           </section>
 

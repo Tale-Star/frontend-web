@@ -254,8 +254,8 @@ onBeforeUnmount(() => audioElement.value?.pause())
                 v-model="form.duration"
                 class="form-control number-control"
                 type="number"
-                min="10"
-                max="600"
+                min="30"
+                max="210"
                 step="1"
               >
               <span>segundos</span>
@@ -264,13 +264,13 @@ onBeforeUnmount(() => audioElement.value?.pause())
               v-model="form.duration"
               class="accent-range"
               type="range"
-              min="10"
-              max="600"
+              min="30"
+              max="210"
               step="1"
               aria-label="Duración en segundos"
             >
             <div class="range-limits">
-              <span>10 s</span><span>600 s</span>
+              <span>30 s</span><span>3 min 30 s</span>
             </div>
           </div>
           <BaseInput
