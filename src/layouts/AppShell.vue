@@ -15,7 +15,11 @@ const preferences = usePreferencesStore()
     <AppSidebar />
     <div class="workspace">
       <main class="content">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <KeepAlive :max="5">
+            <component :is="Component" />
+          </KeepAlive>
+        </RouterView>
       </main>
     </div>
   </div>

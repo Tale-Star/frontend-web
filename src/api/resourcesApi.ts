@@ -13,8 +13,6 @@ import type {
   StoryPagePatchRequest,
   StoryPatchRequest,
   StyleProfile,
-  StyleProfileCreateRequest,
-  StyleProfilePatchRequest,
 } from '@/types/api'
 
 function queryFor(value: string | undefined): string {
@@ -57,20 +55,6 @@ export const resourcesApi = {
   },
   listStyleProfiles(q?: string, signal?: AbortSignal): Promise<StyleProfile[]> {
     return httpClient.request<StyleProfile[]>('style-profiles' + queryFor(q), { signal })
-  },
-  createStyleProfile(payload: StyleProfileCreateRequest): Promise<StyleProfile> {
-    return httpClient.request<StyleProfile>('style-profiles', { method: 'POST', body: payload })
-  },
-  patchStyleProfile(id: string, payload: StyleProfilePatchRequest): Promise<StyleProfile> {
-    return httpClient.request<StyleProfile>('style-profiles/' + encodeURIComponent(id), {
-      method: 'PATCH',
-      body: payload,
-    })
-  },
-  deleteStyleProfile(id: string): Promise<void> {
-    return httpClient.request<void>('style-profiles/' + encodeURIComponent(id), {
-      method: 'DELETE',
-    })
   },
   listStories(q?: string, signal?: AbortSignal): Promise<Story[]> {
     return httpClient.request<Story[]>('stories' + queryFor(q), { signal })

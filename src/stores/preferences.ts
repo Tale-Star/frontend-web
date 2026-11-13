@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 const CHILD_MODE_KEY = 'tale-star-child-mode'
+const CHILD_MODE_ITEM_KEY = 'tale-star-child-mode-item'
 
 function readChildMode(): boolean {
   try {
@@ -13,11 +14,23 @@ function readChildMode(): boolean {
 
 export const usePreferencesStore = defineStore('preferences', () => {
   const childMode = ref(readChildMode())
+  const childModeItemId = ref<string | null>(readPresentedItem())
 
-  function enterChildMode(): void {
+  function readPresentedItem(): string | null {
+    try {
+      return childMode.value ? window.sessionStorage.getItem(CHILD_MODE_ITEM_KEY) : null
+    } catch {
+      return null
+    }
+  }
+
+  function enterChildMode(itemId: string | null = null): void {
     childMode.value = true
+    childModeItemId.value = itemId
     try {
       window.sessionStorage.setItem(CHILD_MODE_KEY, 'true')
+      if (itemId) window.sessionStorage.setItem(CHILD_MODE_ITEM_KEY, itemId)
+      else window.sessionStorage.removeItem(CHILD_MODE_ITEM_KEY)
     } catch {
       // Child mode remains active in memory when storage is unavailable.
     }
@@ -25,12 +38,14 @@ export const usePreferencesStore = defineStore('preferences', () => {
 
   function leaveChildMode(): void {
     childMode.value = false
+    childModeItemId.value = null
     try {
       window.sessionStorage.removeItem(CHILD_MODE_KEY)
+      window.sessionStorage.removeItem(CHILD_MODE_ITEM_KEY)
     } catch {
       // Child mode is still cleared in memory.
     }
   }
 
-  return { childMode, enterChildMode, leaveChildMode }
+  return { childMode, childModeItemId, enterChildMode, leaveChildMode }
 })

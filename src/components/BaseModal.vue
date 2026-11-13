@@ -2,7 +2,7 @@
 import { nextTick, onUnmounted, ref, useId, watch } from 'vue'
 import UiIcon from '@/components/UiIcon.vue'
 
-const props = defineProps<{ modelValue: boolean; title: string }>()
+const props = defineProps<{ modelValue: boolean; title: string; fullscreen?: boolean; closeLabel?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 const dialog = ref<HTMLElement | null>(null)
 const titleId = `modal-title-${useId()}`
@@ -64,6 +64,7 @@ onUnmounted(() => {
     <div
       v-if="modelValue"
       class="modal-backdrop"
+      :class="{ 'modal-fullscreen': fullscreen }"
       role="presentation"
       @click.self="emit('update:modelValue', false)"
     >
@@ -80,12 +81,13 @@ onUnmounted(() => {
             {{ title }}
           </h2>
           <button
-            class="button-icon"
+            :class="fullscreen ? 'button button-secondary presentation-exit' : 'button-icon'"
             type="button"
-            aria-label="Cerrar"
+            :aria-label="closeLabel || 'Cerrar'"
             @click="emit('update:modelValue', false)"
           >
             <UiIcon name="close" />
+            <span v-if="fullscreen">{{ closeLabel || 'Cerrar' }}</span>
           </button>
         </header>
         <slot />

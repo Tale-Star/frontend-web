@@ -12,12 +12,16 @@ import ResourceManager from '@/components/ResourceManager.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import { useLibraryCollection } from '@/composables/useLibraryCollection'
 import { useNoticesStore } from '@/stores/notices'
+import { useAuthStore } from '@/stores/auth'
+import { usePreferencesStore } from '@/stores/preferences'
 import type { LibraryItem, LibraryItemType, LibraryItemPatchRequest } from '@/types/api'
 
 type LibraryTab = 'creations' | 'characters' | 'scenarios' | 'styles'
 
 const router = useRouter()
 const notices = useNoticesStore()
+const auth = useAuthStore()
+const preferences = usePreferencesStore()
 const collection = useLibraryCollection()
 const {
   items,
@@ -65,6 +69,15 @@ function itemsOfType(type: LibraryItemType): LibraryItem[] {
 function openViewer(item: LibraryItem): void {
   viewerItem.value = item
   viewerOpen.value = true
+}
+
+function presentItem(item: LibraryItem): void {
+  if (!auth.user?.pin_configured) {
+    notices.push('Configura un PIN parental en tu perfil para presentar una creación al niño.')
+    void router.push('/profile')
+    return
+  }
+  preferences.enterChildMode(item.id)
 }
 
 function editMetadata(item: LibraryItem): void {
@@ -268,6 +281,7 @@ onMounted(refresh)
                 :item="item"
                 :busy="busyItemId === item.id"
                 @open="openViewer(item)"
+                @present="presentItem(item)"
                 @favorite="favorite(item)"
                 @edit="editMetadata(item)"
                 @edit-story="editStory(item)"
@@ -291,6 +305,7 @@ onMounted(refresh)
                 :item="item"
                 :busy="busyItemId === item.id"
                 @open="openViewer(item)"
+                @present="presentItem(item)"
                 @favorite="favorite(item)"
                 @edit="editMetadata(item)"
                 @edit-story="editStory(item)"
@@ -317,6 +332,7 @@ onMounted(refresh)
                   :item="item"
                   :busy="busyItemId === item.id"
                   @open="openViewer(item)"
+                  @present="presentItem(item)"
                   @favorite="favorite(item)"
                   @edit="editMetadata(item)"
                   @edit-story="editStory(item)"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import ChildModeCard from '@/components/ChildModeCard.vue'
@@ -7,10 +7,15 @@ import LibraryItemViewer from '@/components/LibraryItemViewer.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import { useChildMode } from '@/composables/useChildMode'
 import { useLibraryCollection } from '@/composables/useLibraryCollection'
+import { usePreferencesStore } from '@/stores/preferences'
 import type { LibraryItem } from '@/types/api'
 
 const library = useLibraryCollection()
 const { visibleItems, loading, loadError, load } = library
+const preferences = usePreferencesStore()
+const presentedItems = computed(() => preferences.childModeItemId
+  ? visibleItems.value.filter((item) => item.id === preferences.childModeItemId)
+  : visibleItems.value)
 const { form, validating, error, requestExit } = useChildMode()
 const exitModalOpen = ref(false)
 const viewerOpen = ref(false)
@@ -22,9 +27,28 @@ function openItem(item: LibraryItem): void {
 }
 
 function openExit(): void {
+  viewerOpen.value = false
   form.pin = ''
   error.value = ''
   exitModalOpen.value = true
+}
+
+function cancelExit(): void {
+  exitModalOpen.value = false
+  form.pin = ''
+  error.value = ''
+  if (viewerItem.value) viewerOpen.value = true
+}
+
+function onViewerChange(open: boolean): void {
+  viewerOpen.value = open
+  if (!open) openExit()
+}
+
+async function loadPresentation(): Promise<void> {
+  await load()
+  const selected = presentedItems.value.find((item) => item.id === preferences.childModeItemId)
+  if (selected && !exitModalOpen.value) openItem(selected)
 }
 
 async function submitExit(): Promise<void> {
@@ -32,12 +56,15 @@ async function submitExit(): Promise<void> {
   if (!error.value) exitModalOpen.value = false
 }
 
-onMounted(() => void load())
+onMounted(() => void loadPresentation())
 </script>
 
 <template>
   <main class="child-mode-screen">
-    <header class="child-mode-header">
+    <header
+      class="child-mode-header"
+      :class="{ 'child-direct': preferences.childModeItemId }"
+    >
       <div
         class="child-brand"
         aria-label="Tale Star"
@@ -48,7 +75,10 @@ onMounted(() => void load())
         >
         <span>Tale Star</span>
       </div>
-      <div class="child-heading">
+      <div
+        v-if="!preferences.childModeItemId"
+        class="child-heading"
+      >
         <span class="eyebrow">Un lugar para imaginar</span>
         <h1>¿Qué quieres descubrir?</h1>
         <p>Elige una creación de tu biblioteca.</p>
@@ -65,6 +95,7 @@ onMounted(() => void load())
     </header>
 
     <section
+      v-if="!preferences.childModeItemId || !viewerItem"
       class="child-library"
       aria-label="Biblioteca infantil"
     >
@@ -86,16 +117,16 @@ onMounted(() => void load())
       >
         <strong>No se pudo abrir la biblioteca</strong>
         <p>{{ loadError }}</p>
-        <BaseButton @click="load">
+        <BaseButton @click="loadPresentation">
           Intentar otra vez
         </BaseButton>
       </div>
       <div
-        v-else-if="visibleItems.length"
+        v-else-if="presentedItems.length"
         class="child-library-grid"
       >
         <ChildModeCard
-          v-for="item in visibleItems"
+          v-for="item in presentedItems"
           :key="item.id"
           :item="item"
           @open="openItem(item)"
@@ -109,19 +140,22 @@ onMounted(() => void load())
           name="sparkle"
           :size="27"
         />
-        <strong>Tu biblioteca aún está vacía</strong>
-        <p>Cuando guardes una creación, podrás verla aquí.</p>
+        <strong>{{ preferences.childModeItemId ? 'Esta creación no está disponible' : 'Tu biblioteca aún está vacía' }}</strong>
+        <p>{{ preferences.childModeItemId ? 'Pide ayuda a un adulto para salir y elegir otra creación.' : 'Cuando guardes una creación, podrás verla aquí.' }}</p>
       </div>
     </section>
 
     <LibraryItemViewer
-      v-model="viewerOpen"
+      :model-value="viewerOpen"
       :item="viewerItem"
+      presentation
+      @update:model-value="onViewerChange"
     />
 
     <BaseModal
-      v-model="exitModalOpen"
+      :model-value="exitModalOpen"
       title="Validación para salir"
+      @update:model-value="!$event && cancelExit()"
     >
       <form
         class="exit-form"
@@ -159,7 +193,7 @@ onMounted(() => void load())
           <BaseButton
             type="button"
             :disabled="validating"
-            @click="exitModalOpen = false; form.pin = ''"
+            @click="cancelExit"
           >
             Cancelar
           </BaseButton>
@@ -179,6 +213,7 @@ onMounted(() => void load())
 <style scoped>
 .child-mode-screen { position: fixed; z-index: 80; inset: 0; min-width: 320px; overflow: auto; padding: max(18px,env(safe-area-inset-top)) clamp(16px,4vw,58px) max(24px,env(safe-area-inset-bottom)); background: radial-gradient(circle at 12% 5%,rgba(230,219,254,.96) 0 10%,transparent 32%),radial-gradient(circle at 82% 16%,rgba(177,148,254,.78) 0 13%,transparent 38%),linear-gradient(150deg,#f8f6ff 0%,#e8e0ff 24%,#c7b4ff 55%,#8d69fe 82%,#7454fd 100%); }
 .child-mode-header { display: grid; grid-template-columns: 1fr minmax(250px,2fr) 1fr; align-items: start; gap: 18px; max-width: 1500px; margin: 0 auto 24px; }
+.child-mode-header.child-direct { grid-template-columns: 1fr auto; }
 .child-brand { display: inline-flex; align-items: center; gap: 9px; color: var(--text); font-family: var(--font-display); font-size: 15px; font-weight: 800; }
 .child-brand img { width: 36px; height: 36px; border-radius: 11px; box-shadow: var(--shadow-sm); }
 .child-heading { text-align: center; }

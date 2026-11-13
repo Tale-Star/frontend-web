@@ -6,7 +6,7 @@ import UiIcon from '@/components/UiIcon.vue'
 import { useLibraryViewer } from '@/composables/useLibraryViewer'
 import type { LibraryItem } from '@/types/api'
 
-const props = defineProps<{ modelValue: boolean; item: LibraryItem | null }>()
+const props = defineProps<{ modelValue: boolean; item: LibraryItem | null; presentation?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 const viewer = useLibraryViewer()
 const {
@@ -54,9 +54,14 @@ function onModalChange(value: boolean): void {
   <BaseModal
     :model-value="modelValue"
     :title="item?.name || 'Vista previa'"
+    :fullscreen="presentation"
+    :close-label="presentation ? 'Salir del modo infantil' : undefined"
     @update:model-value="onModalChange"
   >
-    <div class="library-viewer-body">
+    <div
+      class="library-viewer-body"
+      :class="{ 'presentation-viewer': presentation }"
+    >
       <div
         v-if="loading"
         class="viewer-state"
@@ -214,7 +219,10 @@ function onModalChange(value: boolean): void {
           </article>
         </div>
 
-        <dl class="viewer-metadata">
+        <dl
+          v-if="!presentation"
+          class="viewer-metadata"
+        >
           <div><dt>Tipo</dt><dd>{{ openedItem.type }}</dd></div>
           <div><dt>Guardado</dt><dd>{{ new Date(openedItem.created_at).toLocaleString() }}</dd></div>
           <div v-if="openedItem.media_type">
@@ -222,7 +230,10 @@ function onModalChange(value: boolean): void {
           </div>
           <div><dt>Asset / recurso</dt><dd>{{ openedItem.resource_id }}</dd></div>
         </dl>
-        <footer class="viewer-actions">
+        <footer
+          v-if="!presentation"
+          class="viewer-actions"
+        >
           <BaseButton
             :disabled="openedItem.type !== 'story' && !assetUrl"
             @click="download"
@@ -275,4 +286,28 @@ function onModalChange(value: boolean): void {
 .viewer-metadata dd { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--text-2); font-size: 9px; }
 .viewer-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .muted { color: var(--text-3); }
+.presentation-viewer { display: grid; flex: 1; min-height: 0; overflow: auto; padding: clamp(12px,2vw,28px); }
+.presentation-viewer .viewer-state { min-height: 50vh; font-size: 18px; }
+.presentation-viewer .image-viewer { height: 100%; min-height: 0; max-height: none; background: #f1edff; }
+.presentation-viewer .image-viewer img { width: 100%; height: 100%; max-height: calc(100dvh - 130px); object-fit: contain; }
+.presentation-viewer .story-viewer { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(280px,.7fr); min-height: 0; }
+.presentation-viewer .story-page-art { min-height: 0; max-height: none; background: #f1edff; }
+.presentation-viewer .story-page-art img { width: 100%; height: 100%; max-height: calc(100dvh - 130px); object-fit: contain; }
+.presentation-viewer .story-copy { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: clamp(20px,3vw,48px); }
+.presentation-viewer .story-copy .eyebrow { font-size: 12px; }
+.presentation-viewer .story-copy > p { font-size: clamp(22px,2.4vw,34px); }
+.presentation-viewer .story-copy .story-action { font-size: 16px; }
+.presentation-viewer .story-pager { margin-top: auto; }
+.presentation-viewer .story-pager span { font-size: 14px; }
+.presentation-viewer .story-pager :deep(.button) { min-width: 48px; min-height: 48px; }
+.presentation-viewer .audio-viewer { align-self: center; width: min(100%,900px); margin: auto; gap: 24px; }
+.presentation-viewer .audio-art { min-height: min(50dvh,400px); }
+.presentation-viewer .audio-art small { font-size: 16px; }
+.presentation-viewer .audio-viewer audio { min-height: 54px; }
+@media (max-width: 760px) {
+  .presentation-viewer .story-viewer { grid-template-columns: 1fr; }
+  .presentation-viewer .story-page-art img { height: auto; max-height: 48dvh; }
+  .presentation-viewer .story-copy { gap: 8px; }
+  .presentation-viewer .story-copy > p { font-size: 22px; }
+}
 </style>

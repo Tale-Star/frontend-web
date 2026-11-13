@@ -8,6 +8,7 @@ defineProps<{
   icon: IconName
   detail?: string
   busy?: boolean
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{ edit: []; delete: [] }>()
@@ -28,7 +29,10 @@ const emit = defineEmits<{ edit: []; delete: [] }>()
         >{{ detail }}</small>
       </div>
     </div>
-    <div class="resource-card-actions">
+    <div
+      v-if="!readOnly"
+      class="resource-card-actions"
+    >
       <button
         class="button-icon"
         type="button"

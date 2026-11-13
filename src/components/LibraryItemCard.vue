@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import BaseButton from '@/components/BaseButton.vue'
 import MediaThumbnail from '@/components/MediaThumbnail.vue'
 import UiIcon from '@/components/UiIcon.vue'
 import type { LibraryItem, LibraryItemType } from '@/types/api'
@@ -7,6 +8,7 @@ import type { LibraryItem, LibraryItemType } from '@/types/api'
 defineProps<{ item: LibraryItem; busy?: boolean }>()
 const emit = defineEmits<{
   open: []
+  present: []
   favorite: []
   edit: []
   editStory: []
@@ -20,11 +22,12 @@ const typeLabels: Record<LibraryItemType, string> = {
   music: 'Música',
 }
 
-function emitMenu(action: 'edit' | 'editStory' | 'remove' | 'open'): void {
+function emitMenu(action: 'edit' | 'editStory' | 'remove' | 'open' | 'present'): void {
   menu.value?.removeAttribute('open')
   if (action === 'edit') emit('edit')
   else if (action === 'editStory') emit('editStory')
   else if (action === 'remove') emit('remove')
+  else if (action === 'present') emit('present')
   else emit('open')
 }
 
@@ -91,6 +94,12 @@ function dateLabel(value: string): string {
           </button>
           <button
             type="button"
+            @click="emitMenu('present')"
+          >
+            Presentar al niño
+          </button>
+          <button
+            type="button"
             @click="emitMenu('edit')"
           >
             Editar datos
@@ -111,6 +120,17 @@ function dateLabel(value: string): string {
         </div>
       </details>
     </div>
+    <BaseButton
+      class="present-button"
+      :aria-label="'Presentar al niño: ' + item.name"
+      @click="emit('present')"
+    >
+      <UiIcon
+        name="sparkle"
+        :size="13"
+      />
+      Presentar al niño
+    </BaseButton>
     <p
       v-if="item.description"
       class="creation-description"
@@ -139,6 +159,7 @@ function dateLabel(value: string): string {
 .creation-title:hover { color: var(--accent); }
 .creation-copy small { display: block; margin-top: 4px; color: var(--text-3); font-size: 7px; letter-spacing: .035em; }
 .creation-description { display: -webkit-box; margin: 6px 2px 0; overflow: hidden; color: var(--text-3); font-size: 8px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.present-button { width: 100%; margin-top: 9px; justify-content: center; }
 .creation-menu { position: relative; flex: 0 0 auto; }
 .creation-menu summary { display: grid; width: 28px; height: 24px; place-items: center; border-radius: 7px; color: var(--text-2); font-size: 12px; font-weight: 800; list-style: none; cursor: pointer; }
 .creation-menu summary::-webkit-details-marker { display: none; }

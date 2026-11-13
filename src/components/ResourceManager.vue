@@ -33,8 +33,6 @@ const form = reactive({
   visualDescription: '',
   attributes: '{}',
   seed: '',
-  promptModifier: '',
-  visualSettings: '{}',
 })
 
 const labels: Record<ResourceKind, string> = {
@@ -72,17 +70,17 @@ function clearForm(): void {
     visualDescription: '',
     attributes: '{}',
     seed: '',
-    promptModifier: '',
-    visualSettings: '{}',
   })
 }
 
 function openCreate(): void {
+  if (props.kind === 'styles') return
   clearForm()
   modalOpen.value = true
 }
 
 function openEdit(record: ResourceRecord): void {
+  if (props.kind === 'styles') return
   clearForm()
   editingId.value = record.id
   form.name = 'name' in record ? record.name : ''
@@ -90,8 +88,6 @@ function openEdit(record: ResourceRecord): void {
   if ('visual_description' in record) form.visualDescription = record.visual_description
   if ('attributes' in record) form.attributes = JSON.stringify(record.attributes, null, 2)
   if ('seed' in record && record.seed !== null) form.seed = String(record.seed)
-  if ('prompt_modifier' in record) form.promptModifier = record.prompt_modifier
-  if ('visual_settings' in record) form.visualSettings = JSON.stringify(record.visual_settings, null, 2)
   modalOpen.value = true
 }
 
@@ -120,6 +116,7 @@ function parseSeed(): number | null | undefined {
 }
 
 async function submit(): Promise<void> {
+  if (props.kind === 'styles') return
   formError.value = ''
   if (!form.name.trim()) {
     formError.value = 'Escribe un nombre para continuar.'
@@ -149,17 +146,6 @@ async function submit(): Promise<void> {
       }
       if (editingId.value) await resourcesApi.patchScenario(editingId.value, payload)
       else await resourcesApi.createScenario(payload)
-    } else {
-      const visualSettings = parseObject(form.visualSettings, 'Los ajustes visuales')
-      if (!visualSettings) return
-      const payload = {
-        name: form.name.trim(),
-        description: form.description,
-        prompt_modifier: form.promptModifier,
-        visual_settings: visualSettings,
-      }
-      if (editingId.value) await resourcesApi.patchStyleProfile(editingId.value, payload)
-      else await resourcesApi.createStyleProfile(payload)
     }
     modalOpen.value = false
     notices.push(editingId.value ? 'Cambios guardados.' : 'Recurso creado.')
@@ -170,12 +156,12 @@ async function submit(): Promise<void> {
 }
 
 async function remove(record: ResourceRecord): Promise<void> {
+  if (props.kind === 'styles') return
   if (!window.confirm('¿Eliminar ' + record.name + '? Esta acción no se puede deshacer.')) return
   deletingId.value = record.id
   try {
     if (props.kind === 'characters') await resourcesApi.deleteCharacter(record.id)
     else if (props.kind === 'scenarios') await resourcesApi.deleteScenario(record.id)
-    else await resourcesApi.deleteStyleProfile(record.id)
     notices.push('Recurso eliminado.')
     await load()
   } finally {
@@ -185,12 +171,11 @@ async function remove(record: ResourceRecord): Promise<void> {
 
 function detail(record: ResourceRecord): string {
   if ('visual_description' in record) return record.visual_description
-  if ('prompt_modifier' in record) return record.prompt_modifier
   return ''
 }
 
 function detailLabel(): string {
-  return props.kind === 'styles' ? 'Modificador para el prompt' : 'Descripción visual'
+  return 'Descripción visual'
 }
 
 onMounted(load)
@@ -200,18 +185,19 @@ onMounted(load)
   <section class="glass-panel">
     <div class="section-heading resource-manager-heading">
       <div>
-        <h2>{{ kind === 'characters' ? 'Personajes' : kind === 'scenarios' ? 'Escenarios' : 'Perfiles de estilo' }}</h2>
+        <h2>{{ kind === 'characters' ? 'Personajes' : kind === 'scenarios' ? 'Escenarios' : 'Estilos visuales' }}</h2>
         <p>
           {{
             kind === 'characters'
               ? 'Guarda personajes para reutilizarlos en tus escenas.'
               : kind === 'scenarios'
                 ? 'Define lugares y escenarios que mantienen continuidad.'
-                : 'Organiza modificadores visuales reutilizables.'
+                : 'Elige uno de los tres estilos disponibles para tus imágenes y cuentos.'
           }}
         </p>
       </div>
       <BaseButton
+        v-if="kind !== 'styles'"
         variant="primary"
         @click="openCreate"
       >
@@ -275,6 +261,7 @@ onMounted(load)
         :detail="detail(record)"
         :icon="icons[kind]"
         :busy="deletingId === record.id"
+        :read-only="kind === 'styles'"
         @edit="openEdit(record)"
         @delete="remove(record)"
       />
@@ -295,7 +282,7 @@ onMounted(load)
         }}
       </p>
       <BaseButton
-        v-if="!search"
+        v-if="!search && kind !== 'styles'"
         variant="primary"
         @click="openCreate"
       >
@@ -305,6 +292,7 @@ onMounted(load)
   </section>
 
   <BaseModal
+    v-if="kind !== 'styles'"
     v-model="modalOpen"
     :title="(editingId ? 'Editar ' : 'Crear ') + labels[kind]"
   >
@@ -322,20 +310,18 @@ onMounted(load)
             v-model="form.description"
             class="form-control"
             rows="3"
-            :maxlength="kind === 'styles' ? 3000 : 5000"
+            maxlength="5000"
           />
         </label>
-        <template v-if="kind !== 'styles'">
-          <label class="form-field">
-            <span class="form-label">{{ detailLabel() }}</span>
-            <textarea
-              v-model="form.visualDescription"
-              class="form-control"
-              rows="3"
-              maxlength="4000"
-            />
-          </label>
-        </template>
+        <label class="form-field">
+          <span class="form-label">{{ detailLabel() }}</span>
+          <textarea
+            v-model="form.visualDescription"
+            class="form-control"
+            rows="3"
+            maxlength="4000"
+          />
+        </label>
         <template v-if="kind === 'characters'">
           <label class="form-field">
             <span class="form-label">Atributos (JSON)</span>
@@ -356,26 +342,6 @@ onMounted(load)
             :max="4294967295"
             hint="Opcional. Usa un entero entre 0 y 4294967295."
           />
-        </template>
-        <template v-else>
-          <label class="form-field">
-            <span class="form-label">Modificador para el prompt</span>
-            <textarea
-              v-model="form.promptModifier"
-              class="form-control"
-              rows="3"
-              maxlength="4000"
-            />
-          </label>
-          <label class="form-field">
-            <span class="form-label">Ajustes visuales (JSON)</span>
-            <textarea
-              v-model="form.visualSettings"
-              class="form-control code-field"
-              rows="4"
-            />
-            <small class="form-hint">Para imagen: zimage_lora_asset admite flat_anime_style_zit, amelicart_illustration o flat_color_zimage_base; zimage_lora_scale va de 0 a 2.</small>
-          </label>
         </template>
         <div
           v-if="formError"
